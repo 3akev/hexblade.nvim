@@ -1,0 +1,78 @@
+local hex = require("hexblade.hex")
+local format = require("hexblade.format")
+local util = require("hexblade.util")
+
+describe("end-to-end", function()
+	it("converts binary data back and forth", function()
+		local file = assert(io.open("./tests/data/binary", "rb"))
+		local content = file:read("*all")
+		file:close()
+		assert.are.same(content, hex.hexstr2binstr(hex.binstr2hexstr(content)))
+	end)
+
+	it("writes a binary file correctly", function()
+		local file = assert(io.open("./tests/data/binary", "rb"))
+		local content = file:read("*all")
+		file:close()
+		local file2 = assert(io.open("./tests/data/binary2", "wb"))
+		file2:write(content)
+		file2:close()
+
+		local file3 = assert(io.open("./tests/data/binary2", "rb"))
+		local content2 = file3:read("*all")
+		assert.are.same(content, content2)
+	end)
+
+	it("writes a binary file correctly with conversion", function()
+		local file = assert(io.open("./tests/data/binary", "rb"))
+		local content = file:read("*all")
+		file:close()
+		local file2 = assert(io.open("./tests/data/binary3", "wb"))
+		file2:write(hex.hexstr2binstr(hex.binstr2hexstr(content)))
+		file2:close()
+
+		local file3 = assert(io.open("./tests/data/binary3", "rb"))
+		local content2 = file3:read("*all")
+		assert.are.same(content, content2)
+	end)
+
+	it("writes a binary file correctly, passing by a nvim buffer", function()
+		local file = assert(io.open("./tests/data/binary", "rb"))
+		local content = file:read("*all")
+		file:close()
+		local file2 = assert(io.open("./tests/data/binary4", "wb"))
+		local hexstr = hex.binstr2hex(content)
+		local id = vim.api.nvim_create_buf(false, true)
+		vim.api.nvim_buf_set_lines(id, 0, -1, false, hexstr)
+
+		local hexlines = vim.api.nvim_buf_get_lines(id, 0, -1, false)
+
+		file2:write(hex.hex2binstr(hexlines))
+		file2:close()
+
+		local file3 = assert(io.open("./tests/data/binary4", "rb"))
+		local content2 = file3:read("*all")
+		assert.are.same(content, content2)
+	end)
+
+	it("writes a binary file correctly, passing by a nvim buffer and formatting", function()
+		local file = assert(io.open("./tests/data/binary", "rb"))
+		local content = file:read("*all")
+		file:close()
+		local file2 = assert(io.open("./tests/data/binary4", "wb"))
+		local hexstr = hex.binstr2hex(content)
+		local id = vim.api.nvim_create_buf(false, true)
+		vim.api.nvim_buf_set_lines(id, 0, -1, false, hexstr)
+
+		util.format_buffer(id, 16, 2)
+
+		local hexlines = format.ensure_hex_lines(vim.api.nvim_buf_get_lines(id, 0, -1, false))
+
+		file2:write(hex.hex2binstr(hexlines))
+		file2:close()
+
+		local file3 = assert(io.open("./tests/data/binary4", "rb"))
+		local content2 = file3:read("*all")
+		assert.are.same(content, content2)
+	end)
+end)
