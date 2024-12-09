@@ -106,7 +106,9 @@ function M.hexblade_dump(bufnr)
 
 	vim.bo.filetype = M.state[bufnr].saved.filetype
 	M.state[bufnr] = nil
-	vim.treesitter.start(bufnr, vim.bo.filetype)
+	if vim.bo.filetype ~= "" then
+		vim.treesitter.start(bufnr, vim.bo.filetype)
+	end
 end
 
 ---@param bufnr integer
